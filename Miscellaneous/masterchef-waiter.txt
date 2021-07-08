@@ -1,0 +1,82 @@
+//masterchef and waiter
+#include<stdio.h>
+#include<pthread.h>
+#include<semaphore.h>
+#include<queue>
+#include<stdlib.h>
+#include<unistd.h>
+using namespace std;
+
+sem_t empty2;
+sem_t full2;
+pthread_mutex_t lock3;
+
+queue<int> q3;
+int cnt = 0;
+
+void init_semaphore()
+{
+	sem_init(&empty2,0,3);
+	sem_init(&full2,0,0);
+	pthread_mutex_init(&lock3,0);
+}
+
+void * masterchef(void * arg)
+{
+    int* chef_id = (int*)arg;
+	printf("I am masterchef %d\n",(int*)arg);
+	int i;
+	while(true)
+	{
+		sem_wait(&empty2);
+
+		pthread_mutex_lock(&lock3);
+		sleep(1);
+		q3.push(cnt);
+		printf("masterchef %d has called waiter to collect order %d\n", masterchef_id, cnt);
+		cnt++;
+		pthread_mutex_unlock(&lock3);
+
+		sem_post(&full);
+	}
+}
+
+void * waiter(void * arg)
+{
+
+    printf("I am waiter\n");
+	int i;
+	while(true)
+	{
+        sem_wait(&full2);
+
+		pthread_mutex_lock(&lock3);
+		sleep(1);
+		int item = q3.front();
+		q3.pop();
+		printf("\n waiter has delivered order %d\n", item);
+		pthread_mutex_unlock(&lock3);
+
+        sem_post(&empty2);
+	}
+}
+
+
+int main(void)
+{
+	pthread_t thread4[3];
+	pthread_t thread5;
+	
+    int k[3] = {1, 2, 3};
+
+	init_semaphore();
+
+	for (int i = 0; i < 3; i++){
+        pthread_create(&thread4[i], NULL, masterchef, (void*) *(k+i));
+	}
+
+	pthread_create(&thread5, NULL,waiter, NULL);
+
+	while(1);
+	return 0;
+}
